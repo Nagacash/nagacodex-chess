@@ -520,7 +520,7 @@ const App: React.FC = () => {
       
         <img src="/Public/Images/logo.png" alt="Naga Apparel" className="w-10 h-10 sm:w-12 sm:h-12" />
        
-        Naga Codex AI Chess
+        Naga Codex - AI Chess 
       </h1>
 
       {/* Conditional Rendering of Pages */}
