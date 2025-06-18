@@ -1,0 +1,6 @@
+{
+  "name": "Naga Codex AI Chess final",
+  "description": "A dynamic chess application where you can play against a Gemini-powered AI opponent. Features adjustable difficulty levels and a visual chess board.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}

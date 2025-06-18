@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic AI Chess</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&display=swap" rel="stylesheet">
+  <style>
+    /* Additional global styles if necessary, but prefer Tailwind utilities */
+    body {
+      font-family: 'Inter', sans-serif; /* A nice sans-serif font */
+    }
+    /* Add smooth transitions for piece movements if possible via JS, or basic CSS */
+    .chess-piece-transition {
+      transition: transform 0.2s ease-in-out;
+    }
+    .font-dynapuff { /* Custom class for DynaPuff if not using arbitrary values directly */
+        font-family: 'DynaPuff', cursive;
+    }
+
+    /* Typewriter animation */
+    @keyframes typing-effect {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+
+    @keyframes blink-caret-effect {
+      from, to { border-color: transparent; }
+      50% { border-color: #34D399; } /* emerald-400 */
+    }
+
+    .animate-typewriter {
+      display: inline-block; /* Crucial for width animation to wrap content */
+      overflow: hidden; /* Ensures text is revealed by width animation */
+      white-space: nowrap; /* Keeps text on a single line */
+      border-right: .12em solid #34D399; /* The typewriter cursor */
+      letter-spacing: 0.05em; /* Optional: adjusts spacing between letters */
+      /* "Naga Codex AI Chess" has 19 characters */
+      animation: 
+        typing-effect 2.5s steps(19, end) forwards, /* 'forwards' keeps final state */
+        blink-caret-effect 0.75s step-end infinite;
+    }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^18.2.0/",
+    "react/": "https://esm.sh/react@^18.2.0/",
+    "react": "https://esm.sh/react@^18.2.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.5.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-slate-800 text-white">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
