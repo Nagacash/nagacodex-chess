@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import Board from './components/Board'; // Assuming Board component handles its own responsiveness
-import GameControls from './components/GameControls'; // Assuming GameControls handles its own responsiveness
-import StatusBar from './components/StatusBar'; // Assuming StatusBar handles its own responsiveness
-import PromotionModal from './components/PromotionModal'; // Assuming PromotionModal handles its own responsiveness
+import Board from './components/Board';
+import GameControls from './components/GameControls';
+import StatusBar from './components/StatusBar';
+import PromotionModal from './components/PromotionModal';
 import { ChessLogic } from './services/chessLogic';
 import { getAIMove } from './services/geminiService';
 import {
@@ -19,6 +19,16 @@ import {
 import { DEFAULT_DIFFICULTY, BOARD_ROWS, BOARD_COLS } from './constants';
 import { getSquareCoordinates, getSquareId } from './utils/boardUtils';
 
+// Import the new policy page components
+import PrivacyPolicy from './components/PrivacyPolicy';
+import CookiePolicy from './components/CookiePolicy';
+
+// Define the shape of props for policy pages (can be kept here or replicated in policy files)
+interface PolicyPageProps {
+  onGoBack: () => void; // Callback to navigate back to the home page
+}
+
+// --- Main App Component ---
 const App: React.FC = () => {
   // Memoize the initial ChessLogic instance to prevent unnecessary re-creations
   const initialLogicInstance = useMemo(() => new ChessLogic(), []);
@@ -36,6 +46,9 @@ const App: React.FC = () => {
   const [showCookieBanner, setShowCookieBanner] = useState<boolean>(false);
   // State to control the visibility of the scroll-to-top button
   const [showScrollToTop, setShowScrollToTop] = useState<boolean>(false);
+  // State to manage the current page view: 'home', 'cookie-policy', or 'privacy-policy'
+  const [currentPage, setCurrentPage] = useState<string>('home');
+
 
   /**
    * Initializes and returns the default game state based on the provided ChessLogic instance.
@@ -96,7 +109,7 @@ const App: React.FC = () => {
       }
     }
     return null;
-  };
+    };
 
   /**
    * Executes a given move using the chess logic instance and updates the game state.
@@ -135,7 +148,6 @@ const App: React.FC = () => {
         promotingPawn: null, // Clear promoting pawn state
       }));
 
-      // If game is not over, determine if it's AI's turn
       if (!checkmate && !stalemate) {
         setIsAITurn(playerWhoseTurnIsNext === PieceColor.BLACK);
       } else {
@@ -143,10 +155,9 @@ const App: React.FC = () => {
       }
     } else {
       console.error("Move failed in chessLogicInstance.makeMove for move:", move);
-      // If move failed, clear any selected square and valid moves to reset UI
       setGameState(prev => ({ ...prev, selectedSquare: null, validMoves: [] }));
     }
-  }, [chessLogicInstance]); // Dependency on chessLogicInstance
+  }, [chessLogicInstance]);
 
   /**
    * Handles a click on a square of the chessboard.
@@ -154,40 +165,32 @@ const App: React.FC = () => {
    * @param squareId The ID of the clicked square (e.g., 'e2').
    */
   const handleSquareClick = useCallback((squareId: SquareId) => {
-    // Prevent interaction during AI turn, game over states, promotion, or if game hasn't started
     if (isAITurn || gameState.isCheckmate || gameState.isStalemate || gameState.promotingPawn || !isGameInProgress) return;
 
     const pieceOnClickedSquare = chessLogicInstance.getPieceAt(squareId);
 
     if (gameState.selectedSquare) {
-      // If a piece is already selected, try to move it to the clicked square
       if (gameState.validMoves.includes(squareId)) {
         const move: Move = { from: gameState.selectedSquare, to: squareId };
 
         const fromPiece = chessLogicInstance.getPieceAt(gameState.selectedSquare);
         const toCoords = getSquareCoordinates(squareId);
-        // Check for pawn promotion conditions
         if (fromPiece?.type === PieceType.PAWN && toCoords &&
           ((fromPiece.color === PieceColor.WHITE && toCoords.row === 0) ||
             (fromPiece.color === PieceColor.BLACK && toCoords.row === BOARD_ROWS - 1))) {
-          // If it's a promotion, set promotingPawn state and wait for user selection
           setGameState(prev => ({ ...prev, promotingPawn: { from: gameState.selectedSquare!, to: squareId } }));
-          return; // Exit, move will be performed after promotion selection
+          return;
         }
-        performMove(move); // Perform the move directly if no promotion
+        performMove(move);
       } else {
-        // If clicked square is not a valid move for the selected piece
         if (pieceOnClickedSquare && pieceOnClickedSquare.color === chessLogicInstance.getCurrentPlayer()) {
-          // If clicked square has a piece of current player's color, select it
           const newValidMoves = chessLogicInstance.getValidMovesForPiece(squareId);
           setGameState(prev => ({ ...prev, selectedSquare: squareId, validMoves: newValidMoves }));
         } else {
-          // Otherwise, deselect the current piece and clear valid moves
           setGameState(prev => ({ ...prev, selectedSquare: null, validMoves: [] }));
         }
       }
     } else {
-      // No piece selected, try to select the clicked square's piece
       if (pieceOnClickedSquare && pieceOnClickedSquare.color === chessLogicInstance.getCurrentPlayer()) {
         const validMoves = chessLogicInstance.getValidMovesForPiece(squareId);
         setGameState(prev => ({ ...prev, selectedSquare: squareId, validMoves: validMoves }));
@@ -200,9 +203,9 @@ const App: React.FC = () => {
    * @param promotedPieceType The type of piece the pawn is promoted to.
    */
   const handlePromotion = useCallback((promotedPieceType: PieceType) => {
-    if (!gameState.promotingPawn) return; // Should not happen if modal is shown correctly
+    if (!gameState.promotingPawn) return;
     const move: Move = { ...gameState.promotingPawn, promotion: promotedPieceType };
-    performMove(move); // Perform the move with promotion
+    performMove(move);
   }, [gameState.promotingPawn, performMove]);
 
 
@@ -210,9 +213,9 @@ const App: React.FC = () => {
    * Resets the game to its initial state.
    */
   const resetGame = useCallback(() => {
-    const newLogicInstance = new ChessLogic(); // Create a new logic instance
+    const newLogicInstance = new ChessLogic();
     setChessLogicInstance(newLogicInstance);
-    setGameState(getInitialGameState(newLogicInstance)); // Reset game state
+    setGameState(getInitialGameState(newLogicInstance));
     setIsAITurn(false);
     setIsGameInProgress(false);
   }, []);
@@ -224,11 +227,11 @@ const App: React.FC = () => {
     const newLogicInstance = new ChessLogic();
     setChessLogicInstance(newLogicInstance);
     setGameState(prev => ({
-      ...getInitialGameState(newLogicInstance), // Get initial state
-      gameStatusMessage: "Game started. White to move." // Set initial message
+      ...getInitialGameState(newLogicInstance),
+      gameStatusMessage: "Game started. White to move."
     }));
     setIsAITurn(false);
-    setIsGameInProgress(true); // Mark game as in progress
+    setIsGameInProgress(true);
   }, []);
 
   /**
@@ -255,7 +258,6 @@ const App: React.FC = () => {
 
     const kingSquareId = findKingSquare(currentLogicPlayer, newBoardPieces);
 
-    // Update the fullBoardState with current pieces, check status, selections, and valid moves
     setGameState(prev => {
       const updatedFullBoardState = prev.boardState.map((row, rIndex) =>
         row.map((sq, cIndex) => {
@@ -265,7 +267,6 @@ const App: React.FC = () => {
             ...sq,
             id: currentSquareId,
             piece: pieceOnSquare,
-            // Mark king square as 'in check' if it is and it's the king's square
             isCheck: isCurrentlyInCheck && kingSquareId === currentSquareId && pieceOnSquare?.type === PieceType.KING,
             isSelected: prev.selectedSquare === currentSquareId,
             isValidMove: prev.validMoves.includes(currentSquareId)
@@ -300,35 +301,31 @@ const App: React.FC = () => {
   useEffect(() => {
     let timeoutId: number | undefined;
 
-    // Only proceed if it's AI's turn, game is in progress, and not in a game-over state
     if (isAITurn && !gameState.isCheckmate && !gameState.isStalemate && isGameInProgress) {
       const aiPlayerColor = chessLogicInstance.getCurrentPlayer();
 
-      // Safety check: ensure AI is supposed to move for the black pieces
       if (aiPlayerColor !== PieceColor.BLACK) {
         console.warn(`AI turn inconsistency: Expected Black, got ${aiPlayerColor}. Resetting AI turn.`);
         setIsAITurn(false);
         return;
       }
 
-      // Get all valid moves for the AI player
       const validMovesForAIPlayer = chessLogicInstance.getAllValidMovesForPlayer(aiPlayerColor);
       const validMovesUci = validMovesForAIPlayer.map(m => {
         let uci = `${m.from}${m.to}`;
         if (m.promotion) {
-          uci += m.promotion.charAt(0).toLowerCase(); // Append promotion type for UCI
+          uci += m.promotion.charAt(0).toLowerCase();
         }
         return uci;
       });
 
-      // If AI has no valid moves, it's either checkmate or stalemate
       if (validMovesUci.length === 0) {
         const isKingInCheckForAI = chessLogicInstance.isKingInCheck(aiPlayerColor);
         if (isKingInCheckForAI) {
           setGameState(prev => ({
             ...prev,
             isCheckmate: true,
-            winner: PieceColor.WHITE, // White (human player) wins
+            winner: PieceColor.WHITE,
             gameStatusMessage: "Checkmate! White wins.",
           }));
         } else {
@@ -338,35 +335,28 @@ const App: React.FC = () => {
             gameStatusMessage: "Stalemate! It's a draw.",
           }));
         }
-        setIsAITurn(false); // End AI turn as game is over
+        setIsAITurn(false);
         return;
       }
 
-      // Calculate AI thinking time based on difficulty, with a minimum delay
       const aiThinkTime = Math.max(100, 100 * difficulty);
 
-      // Set a timeout for AI to "think" before making a move
       timeoutId = window.setTimeout(async () => {
-        // Re-check game state before making a move, as it might have changed during timeout
         if (gameState.isCheckmate || gameState.isStalemate || !isGameInProgress || !isAITurn) {
           if (isAITurn) setIsAITurn(false);
           return;
         }
 
-        // Get AI's chosen move from the service
         let aiChosenUci = await getAIMove(chessLogicInstance, difficulty, validMovesUci);
 
-        // Fallback: If AI service returns an invalid or no move, choose a random valid move
         if (!aiChosenUci || !validMovesUci.includes(aiChosenUci)) {
           if (validMovesUci.length > 0) {
             const originalChoice = aiChosenUci;
             aiChosenUci = validMovesUci[Math.floor(Math.random() * validMovesUci.length)];
             console.warn(`AI service chose an invalid ('${originalChoice}') or no move. Forced random valid move: ${aiChosenUci}.`);
           } else {
-            // This case should ideally be caught by the earlier validMovesUci.length === 0 check
             console.error("AI Turn Critical: No valid moves available during AI move execution, and this wasn't caught earlier.");
             setIsAITurn(false);
-            // Emergency re-evaluation of game end conditions
             const isKingInCheckForAI = chessLogicInstance.isKingInCheck(aiPlayerColor);
             if (isKingInCheckForAI && !gameState.isCheckmate) {
               setGameState(prev => ({ ...prev, isCheckmate: true, winner: PieceColor.WHITE, gameStatusMessage: "Checkmate! White wins (emergency check)." }));
@@ -377,13 +367,11 @@ const App: React.FC = () => {
           }
         }
 
-        // Final safety check before performing the move
         if (gameState.isCheckmate || gameState.isStalemate || !isGameInProgress || !isAITurn) {
           if (isAITurn) setIsAITurn(false);
           return;
         }
 
-        // If a valid AI move is chosen, parse and perform it
         if (aiChosenUci) {
           const from = aiChosenUci.substring(0, 2) as SquareId;
           const to = aiChosenUci.substring(2, 4) as SquareId;
@@ -405,7 +393,6 @@ const App: React.FC = () => {
       }, aiThinkTime);
     }
 
-    // Cleanup function to clear the timeout if the component unmounts or dependencies change
     return () => {
       if (timeoutId) {
         window.clearTimeout(timeoutId);
@@ -418,7 +405,6 @@ const App: React.FC = () => {
    * @param level The new difficulty level.
    */
   const handleDifficultyChange = (level: Difficulty) => {
-    // Allow difficulty change only if no game is in progress
     if (!isGameInProgress) {
       setDifficulty(level);
     }
@@ -445,6 +431,8 @@ const App: React.FC = () => {
     localStorage.setItem('cookiesAccepted', 'true');
     setShowCookieBanner(false);
     console.log('All cookies accepted!');
+    // Simulated logging to "Z튼" for accepted cookies
+    console.log('Z튼: Custom cookies approved.');
   };
 
   /**
@@ -455,7 +443,6 @@ const App: React.FC = () => {
     localStorage.setItem('cookiesAccepted', 'false');
     setShowCookieBanner(false);
     console.log('All cookies rejected!');
-    // In a real application, you would also disable non-essential cookies here.
   };
 
   /**
@@ -463,7 +450,6 @@ const App: React.FC = () => {
    * Controls the visibility of the scroll-to-top button.
    */
   const handleScroll = useCallback(() => {
-    // Show button if scrolled down more than 300px from the top
     if (window.scrollY > 300) {
       setShowScrollToTop(true);
     } else {
@@ -477,7 +463,7 @@ const App: React.FC = () => {
   const scrollToTop = useCallback(() => {
     window.scrollTo({
       top: 0,
-      behavior: 'smooth' // Enable smooth scrolling animation
+      behavior: 'smooth'
     });
   }, []);
 
@@ -486,25 +472,32 @@ const App: React.FC = () => {
    */
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
-    // Cleanup: remove event listener when component unmounts
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [handleScroll]); // Dependency on handleScroll to ensure it's up-to-date
+  }, [handleScroll]);
+
+  /**
+   * Handles programmatic navigation between different pages/views.
+   * @param path The target page path ('home', 'cookie-policy', 'privacy-policy').
+   */
+  const navigateTo = useCallback((path: string) => {
+    setCurrentPage(path);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   return (
-    // Main container for the entire application, with responsive padding and centering
-    <div className="min-h-screen bg-slate-800 flex flex-col items-center justify-center p-2 sm:p-4 selection:bg-emerald-500 selection:text-white">
+    <div className="min-h-screen bg-slate-800 flex flex-col items-center p-2 sm:p-4 selection:bg-emerald-500 selection:text-white">
 
       {/* Cookie Banner - Fixed at the bottom, visible only if showCookieBanner is true */}
       {showCookieBanner && (
-        <div className="fixed bottom-0 left-0 w-full z-50 bg-yellow-300 text-slate-800 text-center py-2 shadow-lg sm:bottom-4">
-          <span className="text-sm">Cookie Notice: We use cookies to ensure you get the best experience. Learn more about our
-            <a href="/cookie-policy" className="text-blue-700 hover:underline ml-1">cookie policy</a> or
-            <a href="/privacy-policy" className="text-blue-700 hover:underline ml-1">privacy policy</a>.
+        <div className="fixed bottom-0 left-0 w-full z-50 bg-yellow-300 text-slate-800 text-center py-2 shadow-lg text-sm sm:text-base sm:bottom-4">
+          <span>Cookie Notice: We use cookies to ensure you get the best experience. Learn more about our
+            <a href="#" onClick={() => navigateTo('cookie-policy')} className="text-blue-700 hover:underline ml-1">cookie policy</a> or
+            <a href="#" onClick={() => navigateTo('privacy-policy')} className="text-blue-700 hover:underline ml-1">privacy policy</a>.
           </span>
-          <button onClick={handleAcceptAllCookies} className="ml-2 text-green-700 hover:text-green-600 border border-green-700 rounded px-2 py-1">Accept All</button>
-          <button onClick={handleRejectAllCookies} className="ml-2 text-red-700 hover:text-red-600 border border-red-700 rounded px-2 py-1">Reject All</button>
+          <button onClick={handleAcceptAllCookies} className="ml-2 px-2 py-1 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 transition-colors duration-200">Accept All</button>
+          <button onClick={handleRejectAllCookies} className="ml-2 px-2 py-1 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700 transition-colors duration-200">Reject All</button>
         </div>
       )}
 
@@ -512,47 +505,50 @@ const App: React.FC = () => {
       {showScrollToTop && (
         <button
           onClick={scrollToTop}
-          // Responsive positioning: bottom-16 on small, bottom-8 on sm+
-          // Responsive positioning: right-4 on small, right-8 on sm+
-          // Green background, rounded, shadow, smooth transition for hover effects
           className="fixed bottom-16 right-4 sm:bottom-8 sm:right-8 bg-green-500 hover:bg-green-600 text-white p-3 rounded-full shadow-lg z-50 transition-all duration-300 ease-in-out transform hover:scale-105"
           aria-label="Scroll to top"
         >
-          {/* SVG icon for up arrow */}
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
           </svg>
         </button>
       )}
 
-      {/* Application Header/Title */}
-      <h1 className="font-dynapuff text-4xl sm:text-5xl md:text-6xl font-bold text-emerald-400 animate-typewriter flex items-center justify-center space-x-4 mb-8"> {/* Responsive font sizes, increased bottom margin */}
-        <img src="/Public/logo.png" alt="Naga Apparel" className="w-12 h-12" /> {/* Fixed size logo, consider making it responsive if needed */}
+      {/* Application Header/Title - Always visible */}
+      <h1 className="font-dynapuff text-4xl sm:text-5xl md:text-6xl font-bold text-emerald-400 animate-typewriter flex items-center justify-center space-x-2 sm:space-x-4 mb-8 text-center px-2">
+        <img src="/Public/logo.png" alt="Naga Apparel" className="w-10 h-10 sm:w-12 sm:h-12" />
         Naga Codex AI Chess
       </h1>
 
-      {/* Main content area, uses flexbox for layout */}
-      <main className="flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6 w-full max-w-4xl mx-auto">
-        {/* Chess Board Container */}
-        <div className="w-full md:w-auto flex flex-shrink-0 justify-center md:justify-start shadow-2xl rounded overflow-hidden">
-          <Board
-            boardState={gameState.boardState}
-            onSquareClick={handleSquareClick}
-            playerColor={PieceColor.WHITE} // Human player is White, board oriented accordingly
-          />
-        </div>
+      {/* Conditional Rendering of Pages */}
+      {currentPage === 'home' && (
+        <main className="flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6 w-full max-w-4xl mx-auto flex-grow">
+          {/* Chess Board Container */}
+          <div className="w-full md:w-auto flex flex-shrink-0 justify-center md:justify-start shadow-2xl rounded overflow-hidden">
+            <Board
+              boardState={gameState.boardState}
+              onSquareClick={handleSquareClick}
+              playerColor={PieceColor.WHITE} // Human player is White, board oriented accordingly
+            />
+          </div>
 
-        {/* Game Controls and Status Bar Container */}
-        <div className="w-full mt-4 md:mt-0 md:flex-1 space-y-4 min-w-[240px] sm:min-w-[280px]"> {/* Responsive width and minimum width */}
-          <StatusBar message={gameState.gameStatusMessage} />
-          <GameControls
-            difficulty={difficulty}
-            onDifficultyChange={handleDifficultyChange}
-            onResetGame={isGameInProgress ? resetGame : startGame}
-            isGameInProgress={isGameInProgress}
-          />
-        </div>
-      </main>
+          {/* Game Controls and Status Bar Container */}
+          <div className="w-full mt-4 md:mt-0 md:flex-1 space-y-4 min-w-[240px] sm:min-w-[280px]">
+            <StatusBar message={gameState.gameStatusMessage} />
+            <GameControls
+              difficulty={difficulty}
+              onDifficultyChange={handleDifficultyChange}
+              onResetGame={isGameInProgress ? resetGame : startGame}
+              isGameInProgress={isGameInProgress}
+            />
+          </div>
+        </main>
+      )}
+
+      {/* Render policy pages based on currentPage state */}
+      {currentPage === 'cookie-policy' && <CookiePolicy onGoBack={() => navigateTo('home')} />}
+      {currentPage === 'privacy-policy' && <PrivacyPolicy onGoBack={() => navigateTo('home')} />}
+
 
       {/* Promotion Modal - Conditionally rendered when a pawn is promoting */}
       {gameState.promotingPawn && (
@@ -562,8 +558,8 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Footer section */}
-      <footer className="mt-12 sm:mt-16 text-center text-slate-400 text-sm pb-20"> {/* Adjusted top margin, added padding-bottom for fixed banner */}
+      {/* Footer section - Always visible, but with responsive bottom padding to clear cookie banner */}
+      <footer className="mt-12 sm:mt-16 text-center text-slate-400 text-sm pb-24 sm:pb-20 w-full">
         <div className="flex justify-center items-center space-x-4 mb-2">
           {/* LinkedIn Icon */}
           <a
