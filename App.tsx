@@ -516,8 +516,10 @@ const App: React.FC = () => {
 
       {/* Application Header/Title - Always visible */}
       <h1 className="font-dynapuff text-4xl sm:text-5xl md:text-6xl font-bold text-emerald-400 animate-typewriter flex items-center justify-center space-x-2 sm:space-x-4 mb-8 text-center px-2">
-        {/* This is the image tag for your logo. Double-check its src attribute */}
-        <img src="/Public/logo.png" alt="Naga Apparel" className="w-10 h-10 sm:w-12 sm:h-12" />
+       
+      
+        <img src="/Public/Images/logo.png" alt="Naga Apparel" className="w-10 h-10 sm:w-12 sm:h-12" />
+       
         Naga Codex AI Chess
       </h1>
 
