@@ -526,7 +526,7 @@ const App: React.FC = () => {
           Current: src="/Public/Images/logo.png"
           Suggested change (after moving logo.png to project's root 'public' folder):
         */}
-        <img src="/logo.png" alt="Naga Apparel" className="w-10 h-10 sm:w-12 sm:h-12" />
+        <img src="/Public/logo.png" alt="Naga Apparel" className="w-10 h-10 sm:w-12 sm:h-12" />
         {/*
           If "NNaga" still shows despite correct code, perform a hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
           and clear your browser cache. This indicates an old version is being served/cached.
