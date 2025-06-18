@@ -516,11 +516,22 @@ const App: React.FC = () => {
 
       {/* Application Header/Title - Always visible */}
       <h1 className="font-dynapuff text-4xl sm:text-5xl md:text-6xl font-bold text-emerald-400 animate-typewriter flex items-center justify-center space-x-2 sm:space-x-4 mb-8 text-center px-2">
-       
-      
-        <img src="/Public/Images/logo.png" alt="Naga Apparel" className="w-10 h-10 sm:w-12 sm:h-12" />
-       
-        Naga Codex - AI Chess 
+        {/*
+          ACTION REQUIRED: LOGO PATH FIX
+          Based on the Vercel screenshot, Vite is NOT serving assets from /Public/Images/.
+          It's more likely that if your logo.png is handled as a static asset, it should be
+          placed directly in your project's root 'public' folder (lowercase 'p').
+          If so, the path here should be simplified to: src="/logo.png"
+
+          Current: src="/Public/Images/logo.png"
+          Suggested change (after moving logo.png to project's root 'public' folder):
+        */}
+        <img src="/logo.png" alt="Naga Apparel" className="w-10 h-10 sm:w-12 sm:h-12" />
+        {/*
+          If "NNaga" still shows despite correct code, perform a hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
+          and clear your browser cache. This indicates an old version is being served/cached.
+        */}
+        Naga Codex AI Chess
       </h1>
 
       {/* Conditional Rendering of Pages */}
