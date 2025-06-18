@@ -78,7 +78,7 @@ export const getAIMove = async (
       }
     });
 
-    const aiMoveUci = response.text.trim().toLowerCase(); // Normalize to lowercase
+    const aiMoveUci = response?.text?.trim().toLowerCase() || '';
     // console.log("Gemini raw response:", aiMoveUci);
 
     const uciRegex = /^[a-h][1-8][a-h][1-8][qrnb]?$/; // Validates UCI format e.g. e2e4, e7e8q
